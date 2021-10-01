@@ -13,11 +13,18 @@ output:
     style="position:absolute;top:10px;right:50px;" />
 
 # Introduction
-This notebook and related notebooks document analysis of data derived from a multi-year deployment of ocean acidification monitoring equipment at the Southern Maine Community College pier, in South Portland, Maine.
+This notebook and related notebooks document analysis of data derived from a
+multi-year deployment of ocean acidification monitoring equipment at the
+Southern Maine Community College pier, in South Portland, Maine.
 
-The monitoring set up was designed and operated by Joe Kelly, of UNH and his colleagues, on behalf of the Casco Bay Estuary Partnership.  This was one of the first long-term OA monitoring facilities in the northeast, and was intended to test available technologies as well as gain operational experience working with acidification monitoring.
+The monitoring set up was designed and operated by Joe Kelly, of UNH and his
+colleagues, on behalf of the Casco Bay Estuary Partnership.  This was one of the
+first long-term OA monitoring facilities in the northeast, and was intended to
+test available technologies as well as gain operational experience working with
+acidification monitoring.
 
-In this Notebook, we develop  analyses of tidal patterns, looking both at patterns with the daily tides and with spring tide-neap tide cycles.
+In this Notebook, we develop  analyses of tidal patterns, looking both at
+patterns with the daily tides and with spring tide-neap tide cycles.
 
 # Load Libraries
 ```{r load_libraries}
@@ -51,7 +58,9 @@ fn    <- 'CascoBayOAData.csv'
 fpath <- file.path(sibling,fn)
 ```
 
-The following loads existing data, including a "temperature corrected" pCO~2~ value based on Takehashi et al. 2002. It then collapses that data to daily summaries.
+The following loads existing data, including a "temperature corrected" pCO~2~
+value based on Takehashi et al. 2002. It then collapses that data to daily
+summaries.
 
 > Takahashi, Taro & Sutherland, Stewart & Sweeney, Colm & Poisson, Alain &
 > Metzl, Nicolas & Tilbrook, Bronte & Bates, Nicholas & Wanninkhof, Rik & Feely,
@@ -60,14 +69,22 @@ The following loads existing data, including a "temperature corrected" pCO~2~ va
 > biological and temperature effects. Deep Sea Research Part II: Topical Studies
 > in Oceanography. 49. 1601-1622. 10.1016/S0967-0645(02)00003-6.
 
-(See the "Data_Review_And_Filtering" R Notebook for details on why and how we calculated temperature-corrected pCO~2~ values.)
+(See the "Data_Review_And_Filtering" R Notebook for details on why and how we 
+calculated temperature-corrected pCO~2~ values.)
 
 ## Read Data
 We add the Month and Season factor here for use in later graphics.
 
-Note that the original time coordinate here is in UTC, not local time. But by default, read_csv() interprets times according to the locale, here Eastern Standard Time or Eastern Daylight Time, depending on time of year.  I have not found an easy way to alter that behavior, but the force_tz() function in lubridate can fix it. Once that happens, the time is in UTC, and we can express it in for time zone by changing the 'tzone' attribute.
+Note that the original time coordinate here is in UTC, not local time. But by
+default, read_csv() interprets times according to the locale, here Eastern
+Standard Time or Eastern Daylight Time, depending on time of year.  I have not
+found an easy way to alter that behavior, but the force_tz() function in
+lubridate can fix it. Once that happens, the time is in UTC, and we can express
+it in for time zone by changing the 'tzone' attribute.
 
-For analysis of the impact of tides, the main thing is to make sure that both the tide data and the OA data use the SAME time coordinate.  We use Local Standard Time.
+For analysis of the impact of tides, the main thing is to make sure that both 
+the tide data and the OA data use the SAME time coordinate.  We use Local 
+Standard Time.
 
 ```{r load_data} 
 all_data <- read_csv(fpath,
@@ -117,7 +134,10 @@ fpath <- file.path(neice,fn)
 ```
 
 ## Read Tides Data
-Here we are dealing with NOAA's API.  We downloaded the data in "local standard time", but we face the same problem we did importing temporal data for time of day (above).  The function read_csv implicitly imports time data in local clock time.  We need to covert to Standard Time.
+Here we are dealing with NOAA's API.  We downloaded the data in "local standard
+time", but we face the same problem we did importing temporal data for time of
+day (above).  The function read_csv implicitly imports time data in local clock
+time.  We need to covert to Standard Time.
 ```{r load_tide_data}
 tide_data <- read_csv(fpath, 
                        col_types =
@@ -129,7 +149,11 @@ tide_data <- read_csv(fpath,
 ```
 
 ### Data Correction
-The tide data downloaded from the NOAA API lacks tide entries for leap day in 2016. Looking data up on the (NOAA page for the Portland Tide Gage)[https://tidesandcurrents.noaa.gov/waterlevels.html?id=8418150&units=standard&bdate=20160229&edate=20160229&timezone=LST&datum=MLLW&interval=hl&action=] for the Portland tide station, we find that High and low tides on that day were (local standard time):
+The tide data downloaded from the NOAA API lacks tide entries for leap day in
+2016. Looking data up on the (NOAA page for the Portland Tide
+Gage)[https://tidesandcurrents.noaa.gov/waterlevels.html?id=8418150&units=standard&bdate=20160229&edate=20160229&timezone=LST&datum=MLLW&interval=hl&action=]
+for the Portland tide station, we find that High and low tides on that day were
+(local standard time):
 
 Level | Time  | Elevation
 ______|_______|__________
@@ -153,7 +177,9 @@ tide_data <- tide_data %>%
 
 ## Tidal Amplitudes Data
 ### Daily Tidal Amplitudes
-Next, we calculate the observed daily tidal range for each day in the study period.  We use this later to analyze the impact of tidal amplitude on OA parameters.
+Next, we calculate the observed daily tidal range for each day in the study 
+period.  We use this later to analyze the impact of tidal amplitude on OA 
+parameters.
 ```{r daily_amplitude}
 amplitude_data <- tide_data %>%
   mutate(d = as.Date(stdtime)) %>%
@@ -205,9 +231,16 @@ rm(tmp)
 ## Time Since High Tide Data
 We use a function provided in base R called "findInterval."
 
-You might think of findInterval() it as a function that assigns values to values in the first list to bins defined by values in the second list.
+You might think of findInterval() it as a function that assigns values to values 
+in the first list to bins defined by values in the second list.
 
-For our use, we put the list of all times in the first parameter, and the list of ONLY high tides in the second parameter.  The function will figure out which interval (defined by values in the second list, our high tides) each value in the first list belongs to.  The function returns a list of the INDEXES of the "closest but smaller" value in the second list. We then use those indexes to look up the times associated with those indexes, matching each observation with the time of the previous high tide.
+For our use, we put the list of all times in the first parameter, and the list
+of ONLY high tides in the second parameter.  The function will figure out which
+interval (defined by values in the second list, our high tides) each value in
+the first list belongs to.  The function returns a list of the INDEXES of the
+"closest but smaller" value in the second list. We then use those indexes to
+look up the times associated with those indexes, matching each observation with
+the time of the previous high tide.
 ```{r time_since_high}
 hightide_data <- tide_data %>%
   filter(type =='H' | type == 'HH')
@@ -222,7 +255,9 @@ tidal_data <- all_data %>%
 ```
 
 ### Deviations From Average Within a Tidal Cycle
-Finally, we need to calculate how much each observation differs from the average value of all observations that have occurred since the prior high tide.  We can do that based on the tide indexes too.
+Finally, we need to calculate how much each observation differs from the average
+value of all observations that have occurred since the prior high tide.  We can
+do that based on the tide indexes too.
 ```{r deviations_from_tidal_cycle_average}
 tidal_data <- tidal_data %>%
   group_by(tideindex) %>%
@@ -259,9 +294,12 @@ rm(all_data, hightide_data, tide_data)
 # Analysis of Time Since High Tide
 ## PCO~2~ Analysis
 ### Initial Graphic
-We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time since high tide,e WITHOUT accounting for autocorrelation.
+We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time 
+since high tide,e WITHOUT accounting for autocorrelation.
 
-Note also that we do not include linear predictor main effects for the seasons here.  That is because we know, *a priori*, that the average deviation from daily averages is zero, so there is no intercept term.
+Note also that we do not include linear predictor main effects for the seasons
+here.  That is because we know, *a priori*, that the average deviation from
+daily averages is zero, so there is no intercept term.
 
 ```{r tidal_pco2_graphic_cyclical, fig.width = 7, fig.height = 5}
 ggplot(tidal_data, aes(minssincehigh, co2_corr_res)) + 
@@ -282,7 +320,8 @@ ggplot(tidal_data, aes(minssincehigh, co2_corr_res)) +
   geom_text(aes(x = 480, y = 200, label = 'Rising Tide'), hjust = 0) +
   
   xlab('Hours Since High Tide') +
-  ylab(expression (atop(Corrected~pCO[2]~(mu*Atm), Difference~From~Tide~Cycle~Average))) 
+  ylab(expression (atop(Corrected~pCO[2]~(mu*Atm), 
+                        Difference~From~Tide~Cycle~Average))) 
 ```
 
 ### GAM Model
@@ -298,7 +337,9 @@ summary(pco2_gam)
 ```{r gam_check}
 gam.check(pco2_gam)
 ```
-Other than extremely heavy tails, I see nothing here that suggests any major pathologies to this model.  The heavy tails are expected with high temporal autocorrelation. 
+Other than extremely heavy tails, I see nothing here that suggests any major 
+pathologies to this model.  The heavy tails are expected with high temporal 
+autocorrelation. 
 
 #### Autocorrelation
 ```{r autocorrelation}
@@ -313,8 +354,10 @@ rm(pco2_gam)
 ### GAMM with Autocorrelation
 This took about 20 minutes to run.
 ```{r gamm_pco2, cache = TRUE} 
-system.time(pco2_gam <- gamm(co2_corr_res ~  s(minssincehigh, by = Season, bs='cc', k=6),
-                 correlation = corAR1(form = ~ 1 | Season),  # we run out of memory if we don't use a grouping
+# we run out of memory if we don't use a grouping
+system.time(pco2_gam <- gamm(co2_corr_res ~  s(minssincehigh, by = Season, 
+                                               bs='cc', k=6),
+                 correlation = corAR1(form = ~ 1 | Season),  
                  data = tidal_data))
 ```
 ```{r summary_pco2_gamm_gam}
@@ -334,7 +377,8 @@ newdat <- newdat %>%
 ```
 
 ### Create Ribbon Graphic
-The ribbon plot shows approximate 95% confidence intervals for the GAMM fits by season.
+The ribbon plot shows approximate 95% confidence intervals for the GAMM fits by
+season.
 ```{r pco2_ribbon, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=minssincehigh, y=pred, color = Season)) + #geom_line() +
   geom_ribbon(aes(ymin = pred-(1.96*se),
@@ -357,7 +401,8 @@ ggplot(newdat, aes(x=minssincehigh, y=pred, color = Season)) + #geom_line() +
 
 ## pH Analyses
 ### Initial Graphic
-We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time since high tide WITHOUT accounting for autocorrelation.
+We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time 
+since high tide WITHOUT accounting for autocorrelation.
 
 ```{r tidal_ph_graphic_cyclical, fig.width = 7, fig.height = 5}
 ggplot(tidal_data, aes(minssincehigh, ph_res)) + 
@@ -391,12 +436,14 @@ system.time(ph_gam <- gam(ph_res ~  s(minssincehigh, by = Season, bs='cc'),
 ```{r gam_summary_ph}
 summary(ph_gam)
 ```
-Allfour seasonal patterns are judged unlikely to be due solely to chance, but we have not yet considered autocorrelation between successive observations.
+Allfour seasonal patterns are judged unlikely to be due solely to chance, but we 
+have not yet considered autocorrelation between successive observations.
 
 ```{r check_pH_gam}
 gam.check(ph_gam)
 ```
-Other than heavy tails, I see nothing here that suggests any major pathologies to this model.  The heavy tails are expected with high temporal autocorrelation.
+Other than heavy tails, I see nothing here that suggests any major pathologies 
+to this model.  The heavy tails are expected with high temporal autocorrelation.
 
 #### Autocorrelation
 ```{r autocorrelations_ph_residuals}
@@ -407,8 +454,9 @@ We have significant autocorrelation, on the order of phi = 0.5.
 ### GAMM with Autocorrelation
 This took about 5 minutes.
 ```{r gamm_ph, cache = TRUE} 
+# we run out of memory if we don't use a grouping
 system.time(ph_gam <- gamm(ph_res ~  s(minssincehigh, by = Season, bs='cc', k=6),
-                 correlation = corAR1(form = ~ 1 | Season),  # we run out of memory if we don't use a grouping
+                 correlation = corAR1(form = ~ 1 | Season), 
                  data = tidal_data))
 ```
 
@@ -430,7 +478,8 @@ newdat <- newdat %>%
 ```
 
 ### Create Ribbon Graphic
-The ribbon plot shows approximate 95% confidence intervals for the GAMM fits by season.
+The ribbon plot shows approximate 95% confidence intervals for the GAMM fits by 
+season.
 ```{r ph_ribbon, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=minssincehigh, y=pred, color = Season)) +
   geom_ribbon(aes(ymin = pred-(1.96*se),
@@ -453,7 +502,8 @@ ggplot(newdat, aes(x=minssincehigh, y=pred, color = Season)) +
 ```
 
 # Analysis of Spring Tide - Neap Cycles  
-A utility function for quickly looking at three different types of correlation coefficients.  
+A utility function for quickly looking at three different types of correlation 
+coefficients.  
 ```{r make_fun}
 threecors <- function(x,y = NULL) {
   res = list(Pearson = '', Spearman = '', Kendall = '')
@@ -495,7 +545,8 @@ amplitude_data %>% select(range, co2_corr, Season) %>%
   mutate(Type = rep(c('Pearson', 'Spearman', 'Kendall'),4)) %>%
   select(Season, Type, correl_coef)
 ```
-These are fairly low correlations.  The only ones that look meaningfully (as opposed to significantly) correlated are for summer...
+These are fairly low correlations.  The only ones that look meaningfully (as 
+opposed to significantly) correlated are for summer...
 
 ### Formal Analysis
 ```{r pco2_amplitude_linear_models}
@@ -506,42 +557,65 @@ the_gls <- gls(co2_corr ~ range*Season, correlation = corAR1(form = ~ d),
 the_gls_2 <- gls(co2_corr ~ range:Season, correlation = corAR1(form = ~ d),
                  data = amplitude_data, na.action = na.exclude )
 ```
-USing the autocorrelation functions by date dramatically slows execution of the GLS models, compared  with using simple sequential autocorrelation, with only minimal changes in results.
+USing the autocorrelation functions by date dramatically slows execution of the 
+GLS models, compared  with using simple sequential autocorrelation, with only 
+minimal changes in results.
 
 ```{r summary_pco2_amplitude_lm}
 summary(the_lm)
 ```
-This suggests we need to look at the pattern seasonally.  Summer is judged nearly statistically significantly different from Winter, which here is the reference level of Season.  Following good practice, that suggests we should not try to interpret the main effect, but look instead to the seasonal effects.
+This suggests we need to look at the pattern seasonally.  Summer is judged
+nearly statistically significantly different from Winter, which here is the
+reference level of Season.  Following good practice, that suggests we should not
+try to interpret the main effect, but look instead to the seasonal effects.
 
-However, this model does not take into account the autocorrelation between observations, so it is likely to overstate statistical significance.  So we compare results of a generalized least squares model.
+However, this model does not take into account the autocorrelation between
+observations, so it is likely to overstate statistical significance.  So we
+compare results of a generalized least squares model.
 
 ```{r summary_pco2_amplitude_gls}
 summary(the_gls)
 ```
-This analysis, which includes consideration of the  high autocorrelation between successive observations, suggests that the regressions lines are not significantly different between seasons, and the main effects of range is not statistically significant.  That suggests there is nothing here to see.
+This analysis, which includes consideration of the  high autocorrelation between
+successive observations, suggests that the regressions lines are not
+significantly different between seasons, and the main effects of range is not
+statistically significant.  That suggests there is nothing here to see.
 
 ```{r summary_pco2_amplitude_gls_2}
 summary(the_gls_2)
 ```
-So, fitting four separate slopes, we also don't see statistically significant relationships with tidal range.  The evidence is weak for an important effect of tidal amplitude on pCO~2~ at any season.
+So, fitting four separate slopes, we also don't see statistically significant
+relationships with tidal range.  The evidence is weak for an important effect of
+tidal amplitude on pCO~2~ at any season.
 
-There is a question whether removing the autocorrelation from the response, without also addressing the autocorrelation in the predictor variable is appropriate.  Since the predictor variable is itself highly autocorrelated, the response will be too.  This may be imposing too strict a test.
+There is a question whether removing the autocorrelation from the response,
+without also addressing the autocorrelation in the predictor variable is
+appropriate.  Since the predictor variable is itself highly autocorrelated, the
+response will be too.  This may be imposing too strict a test.
 
-The next step might be to fit a more complex model, which incorporates more (time varying, autocorrelated) predictor variables, thus removing more unexplained variation, and potentially generating a more sensitive test.
+The next step might be to fit a more complex model, which incorporates more
+(time varying, autocorrelated) predictor variables, thus removing more
+unexplained variation, and potentially generating a more sensitive test.
 
-We explored several alternate GAMMs, fitting either linear or nonlinear smooth terms for the three added predictor variables. Results (for our purposes here) did not differ materially.  In all cases, the effect of tidal range on pCO~2~ remains statistically unimportant.
+We explored several alternate GAMMs, fitting either linear or nonlinear smooth
+terms for the three added predictor variables. Results (for our purposes here)
+did not differ materially.  In all cases, the effect of tidal range on pCO~2~
+remains statistically unimportant.
 
 
 ```{r pco2_aplitude_gamm,  cache = TRUE}
 system.time(
-the_gamm  <- gamm(co2_corr ~ range*Season + s(temp) + s(sal) + s(do), correlation = corAR1(form = ~ d),
+the_gamm  <- gamm(co2_corr ~ range*Season + s(temp) + s(sal) + s(do), 
+                  correlation = corAR1(form = ~ d),
                data = amplitude_data, na.action = na.exclude )
 )
 ```
 ```{r summary(pco2_amplitude_gamm_gam)}
 summary(the_gamm$gam)
 ```
-So, that changes little. Although we see statistically significant relationships with all three predictor variables, we see no evidence for a significant relationship between daily tidal amplitudes and daily median pCO~2~.
+So, that changes little. Although we see statistically significant relationships
+with all three predictor variables, we see no evidence for a significant
+relationship between daily tidal amplitudes and daily median pCO~2~.
 
 Lets see what shape those relationships show.
 ```{r plot pco2_amplitude_gamm_gam}
@@ -578,7 +652,8 @@ amplitude_data %>% select(range, ph, Season) %>%
   mutate(Type = rep(c('Pearson', 'Spearman', 'Kendall'),4)) %>%
   select(Season, Type, correl_coef)
 ```
-These are fairly low correlations.  The only ones that look meaningfully (as opposed to significantly) correlated are for winter....
+These are fairly low correlations.  The only ones that look meaningfully (as 
+opposed to significantly) correlated are for winter....
 
 ### Formal Analysis
 ```{r linear_models_ph_amplitude}
@@ -591,15 +666,21 @@ the_gls <- gls(ph ~ range*Season, correlation = corAR1(form = ~ d),
 ```{r summary_linear_model_ph_amplitude}
 summary(the_lm)
 ```
-There is no evidence here that tidal amplitude plays a role in pH, despite the moderately high correlation in winter.  This is probably because the sample size in winter is quite small.
+There is no evidence here that tidal amplitude plays a role in pH, despite the 
+moderately high correlation in winter.  This is probably because the sample size 
+in winter is quite small.
 
 
 ```{r summary_gls_ph_amplitude}
 summary(the_gls)
 ```
-This analysis, which includes consideration of the  high autocorrelation between successive observations, suggests that the regressions lines are not significantly different between seasons. 
+This analysis, which includes consideration of the  high autocorrelation between 
+successive observations, suggests that the regressions lines are not 
+significantly different between seasons. 
 
-We fit a more complex model, which incorporates more (time varying, autocorrelated) predictor variables, thus removing more unexplained variation, and potentially generating a more sensitive test.
+We fit a more complex model, which incorporates more (time varying, 
+autocorrelated) predictor variables, thus removing more unexplained variation, 
+and potentially generating a more sensitive test.
 
 ```{r gamm_ph_amplitude, cache = TRUE}
 system.time(
@@ -610,14 +691,17 @@ the_gamm  <- gamm(ph ~ range*Season + s(temp) + s(sal) + s(do), correlation = co
 ```{r summary_gamm_ph_amplitude}
 summary(the_gamm$gam)
 ```
-So, that changes little.  Again, we see little evidence for a significant relationship between daily tidal amplitudes and daily median pH.
+So, that changes little.  Again, we see little evidence for a significant 
+relationship between daily tidal amplitudes and daily median pH.
 
 ```{r plot_ph_amplitude_gamm_gam}
 plot(the_gamm$gam)
 ```
 
 ## Direct Comparison Graphics For 2016 
-You can not visualize these relationships if you look at four years of data -- the graphics are simply too compressed, so we zoom in one one period -- summer and fall of 2016.
+You can not visualize these relationships if you look at four years of data -- 
+the graphics are simply too compressed, so we zoom in one one period -- summer 
+and fall of 2016.
 
 ### Using Daily Medians
 ```{r tidal_amplitude_graphic_2016_v1}
@@ -669,6 +753,7 @@ plt +
   geom_smooth(method = 'loess', span = 0.075, se = FALSE) +
   geom_line(aes(tm ,range*75), data = tmp, color = 'red', lwd=1.5) +
   scale_y_continuous(name = expression(paste("Corrected pCO"[2],'(', mu,"Atm)")),
-                     sec.axis = sec_axis(~ ./75, name = 'Daily Tidal Amplitude (ft)'))
+                     sec.axis = sec_axis(~ ./75, 
+                                         name = 'Daily Tidal Amplitude (ft)'))
 
 ```
