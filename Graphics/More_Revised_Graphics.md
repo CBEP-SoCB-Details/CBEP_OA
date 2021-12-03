@@ -2,25 +2,25 @@ Analysis of Casco Bay OA. Still More Revised Graphics
 ================
 Curtis C. Bohlen, Casco Bay Estuary Partnership
 
-  - [Introduction](#introduction)
-  - [Load Libraries](#load-libraries)
-  - [Generate Color Palettes](#generate-color-palettes)
-      - [Monthly](#monthly)
-      - [Seasonal](#seasonal)
-  - [Constants for Axis Labels](#constants-for-axis-labels)
-  - [Load Data](#load-data)
-      - [Establish Folder References](#establish-folder-references)
-      - [Read Data](#read-data)
-  - [Color Palette For Seasonal
+-   [Introduction](#introduction)
+-   [Load Libraries](#load-libraries)
+-   [Generate Color Palettes](#generate-color-palettes)
+    -   [Monthly](#monthly)
+    -   [Seasonal](#seasonal)
+-   [Constants for Axis Labels](#constants-for-axis-labels)
+-   [Load Data](#load-data)
+    -   [Establish Folder References](#establish-folder-references)
+    -   [Read Data](#read-data)
+-   [Color Palette For Seasonal
     Displays](#color-palette-for-seasonal-displays)
-  - [Seasonal Profiles](#seasonal-profiles)
-      - [Aragonite Saturation State](#aragonite-saturation-state)
-  - [Diurnal Ribbon Plot](#diurnal-ribbon-plot)
-      - [Calculate Omega Deviations](#calculate-omega-deviations)
-      - [Run the GAMM](#run-the-gamm)
-      - [Generate Predictions from the
+-   [Seasonal Profiles](#seasonal-profiles)
+    -   [Aragonite Saturation State](#aragonite-saturation-state)
+-   [Diurnal Ribbon Plot](#diurnal-ribbon-plot)
+    -   [Calculate Omega Deviations](#calculate-omega-deviations)
+    -   [Run the GAMM](#run-the-gamm)
+    -   [Generate Predictions from the
         Model](#generate-predictions-from-the-model)
-      - [Create Ribbon Graphic](#create-ribbon-graphic)
+    -   [Create Ribbon Graphic](#create-ribbon-graphic)
 
 <img
     src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
@@ -49,20 +49,32 @@ on reformatting graphics related to aragonite saturation.
 library(tidyverse)
 ```
 
-    ## -- Attaching packages ------------------------------------------------------------------------------------ tidyverse 1.3.0 --
+    ## Warning: package 'tidyverse' was built under R version 4.0.5
 
-    ## v ggplot2 3.3.2     v purrr   0.3.4
-    ## v tibble  3.0.3     v dplyr   1.0.2
-    ## v tidyr   1.1.2     v stringr 1.4.0
-    ## v readr   1.3.1     v forcats 0.5.0
+    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
 
-    ## -- Conflicts --------------------------------------------------------------------------------------- tidyverse_conflicts() --
+    ## v ggplot2 3.3.5     v purrr   0.3.4
+    ## v tibble  3.1.6     v dplyr   1.0.7
+    ## v tidyr   1.1.4     v stringr 1.4.0
+    ## v readr   2.1.0     v forcats 0.5.1
+
+    ## Warning: package 'ggplot2' was built under R version 4.0.5
+
+    ## Warning: package 'tidyr' was built under R version 4.0.5
+
+    ## Warning: package 'dplyr' was built under R version 4.0.5
+
+    ## Warning: package 'forcats' was built under R version 4.0.5
+
+    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
     ## x dplyr::filter() masks stats::filter()
     ## x dplyr::lag()    masks stats::lag()
 
 ``` r
 library(lubridate)
 ```
+
+    ## Warning: package 'lubridate' was built under R version 4.0.5
 
     ## 
     ## Attaching package: 'lubridate'
@@ -75,6 +87,8 @@ library(lubridate)
 library(mgcv)
 ```
 
+    ## Warning: package 'mgcv' was built under R version 4.0.5
+
     ## Loading required package: nlme
 
     ## 
@@ -84,7 +98,7 @@ library(mgcv)
     ## 
     ##     collapse
 
-    ## This is mgcv 1.8-33. For overview type 'help("mgcv-package")'.
+    ## This is mgcv 1.8-38. For overview type 'help("mgcv-package")'.
 
 ``` r
 library(CBEPgraphics)
@@ -104,8 +118,7 @@ sequential color palette that’s color-blind and reproduction friendly.
 The rColorBrewer colorRampPalette() function creates a FUNCTION that
 takes the number of colors, and returns a suitable color ramp, based on
 another (usually shorter) color ramp. Note getPalette is a FUNCTION.
-We’ll use this function later to generate the colors we want on the
-fly.
+We’ll use this function later to generate the colors we want on the fly.
 
 ``` r
 # generates a palette function from an existing color ramp
@@ -309,7 +322,7 @@ system.time(omega_gam <- gamm(omega_a_res ~  s(hh, by = Season, bs='cc', k=6),
 ```
 
     ##    user  system elapsed 
-    ##   49.70    9.92   59.66
+    ##   51.13   11.45   62.64
 
 ## Generate Predictions from the Model
 
@@ -348,10 +361,10 @@ ggplot(newdat, aes(x=hh, y=pred, color = Season)) + #geom_line() +
   ylab(expression(atop(Omega[a],Difference~From~Daily~Average)))
 ```
 
-    ## Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning -
-    ## Inf
+    ## Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning
+    ## -Inf
 
-![](More_Revised_Graphics_files/figure-gfm/co2_ribbon-1.png)<!-- -->
+![](More_Revised_Graphics_files/figure-gfm/omega_ribbon-1.png)<!-- -->
 
 ``` r
 # ggsave('figures/omega_diurnal_seasons.pdf', device = cairo_pdf,

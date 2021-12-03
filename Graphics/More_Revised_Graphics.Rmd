@@ -240,7 +240,7 @@ newdat <- newdat %>%
 ## Create Ribbon Graphic
 The ribbon plot shows approximate 95% confidence intervals for the GAMM fits by
 season.
-```{r co2_ribbon, fig.width = 4, fig.height = 4}
+```{r omega_ribbon, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=hh, y=pred, color = Season)) + #geom_line() +
   geom_ribbon(aes(ymin = pred-(1.96*se),
                   ymax = pred+(1.96*se),
