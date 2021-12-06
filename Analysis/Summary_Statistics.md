@@ -58,7 +58,7 @@ fpath <- file.path(sibling,fn)
 ## Load The Data
 
 The following loads existing data, including a “Temperature Adjusted”
-pCO<sub>2</sub> value based on Takehashi et al. 2002. It then collapses
+pCO<sub>2</sub> value based on Takahashi et al. 2002. It then collapses
 that data to daily summaries.
 
 ``` r
