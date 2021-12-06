@@ -4,7 +4,7 @@
 
 Data were collected by staff from Joe Salisbury's lab at UNH, with funding from the Casco Bay Estuary Partnership.
 
-Data was collected at a site n the Southern Maine Community College Pier (approximately 43.6512	-70.2283). The location adjacent to the Portland Channel is hydrologically complex, influenced both by strong tides and river discharge from the Presumpscot River.
+Data was collected at a site in the Southern Maine Community College Pier (approximately 43.6512	-70.2283). The location adjacent to the Portland Channel is hydrologically complex, influenced both by strong tides and river discharge from the Presumpscot River.
 
 Automated sensors were deployed in a protective cage, resting on the bottom in approximately 2.5 meters of water.  The instruments were deployed periodically from 2015 through 2020.  Equipment was maintained, QA/QC samples collected, and data downloaded approximately monthly.  Here we report on data through the end of 2018.
 
