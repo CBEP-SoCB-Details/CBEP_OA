@@ -127,7 +127,7 @@ fpath <- file.path(sibling,fn)
 ```
 
 The following loads existing data, including a “temperature corrected”
-pCO2 value based on Takehashi et al. 2002. It then collapses that data
+pCO2 value based on Takahashi et al. 2002. It then collapses that data
 to daily summaries.
 
 > Takahashi, Taro & Sutherland, Stewart & Sweeney, Colm & Poisson, Alain
@@ -635,7 +635,7 @@ comparisons, thus potentially inflating apparent statistical
 significance.
 
 Most other potential contrasts show even larger differences in diurnal
-patterns. WE will not produce graphics for those,. The other two seasons
+patterns. We will not produce graphics for those. The other two seasons
 that provide similar values for much of the day are summer and fall, yet
 even here, the patterns are clearly distinct.
 
@@ -681,7 +681,7 @@ fit autocorrelated errors.
 
 Note also that we do not include linear predictor main effects for the
 seasons here. That is because we know, *a priori*, that the average
-deviation from daily averages is zero, so there is intercept term.
+deviation from daily averages is zero, so there is an intercept term.
 
 ``` r
 system.time(ph_gam <- gam(ph_res ~  s(hh, by = Season, bs='cc'),
@@ -884,7 +884,7 @@ system.time(ph_gam <- gamm(ph_res ~  s(hh, by = Season, bs='cc', k=6),
     ##    user  system elapsed 
     ##  310.50   86.62  404.41
 
-Revising that to run off the actual time stamp did not work - -t ran for
+Revising that to run off the actual time stamp did not work. It ran for
 well over an hour before crashing.
 
 ``` r
@@ -1094,7 +1094,7 @@ comparisons, thus potentially inflating apparent statistical
 significance.
 
 Most other potential contrasts show even larger differences in diurnal
-patterns. WE will not produce graphics for those,. The other two seasons
+patterns. We will not produce graphics for those. The other two seasons
 that provide similar values for much of the day are summer and fall, yet
 even here, the patterns are clearly distinct.
 
