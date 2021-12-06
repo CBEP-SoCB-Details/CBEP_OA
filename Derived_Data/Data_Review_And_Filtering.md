@@ -115,7 +115,7 @@ the_data <- bind_rows(the_data) %>%
 # Corrections
 
 In downstream analysis steps, We uncovered duplicate dates and times,
-but al lduiplicate rows lack data, specifically from January of 2016. We
+but all duplicate rows lack data, specifically from January of 2016. We
 filter them out here.
 
 ## Records that have no Data
@@ -176,7 +176,7 @@ are infrequent, some judgment is required to decide which observations
 to exclude from further analysis.
 
 Sudden drops in pH to unlikely levels are one potential sign of problems
-wit hthe data. Another sign is if the calculated alkalinity associated
+with the data. Another sign is if the calculated alkalinity associated
 with a low pH observation is unreasonable for sea water (say below about
 1000).
 
@@ -347,7 +347,7 @@ changes are removed.
 
 ### Remove Unwanted Data
 
-TO trim the data, we use the flags to set to NA any variables that
+To trim the data, we use the flags to set to NA any variables that
 depend on accurate pH values, and then toss out any data that lacks
 remaining valid observations.
 
@@ -368,7 +368,7 @@ There is a single point that is recorded as being collected on January
 20, 2016, which appears to be an error in several dimensions. First, the
 instrument was de-deployed right around that time, and this timestamp is
 25 hours after the prior observation, which is unlikely. Temperature is
-sky high for January, and the pH is unreasonably low. WE interpret this
+sky high for January, and the pH is unreasonably low. We interpret this
 value as being a measurement that should have been removed during QA/QC
 because it was probably collected when the device was out of the water
 and in transit back to the lab for servicing.
@@ -532,7 +532,7 @@ the Bay.
 ## Takehashi et al. 2002 Relationships
 
 Here we follow a formula for calculating a “Temperature Corrected”
-pCO<sub>2</sub>, which is derived from methods in Takehashi et al. 2002.
+pCO<sub>2</sub>, which is derived from methods in Takahashi et al. 2002.
 The “temperature corrected” version adjusts for the thermodynamic effect
 of temperature on pCO<sub>2</sub> just discussed.
 
@@ -566,7 +566,7 @@ calculating what the observed pCO<sub>2</sub> would have been at some
 reference temperature (rather than estimating \[CO<sub>2</sub>\] as
 Weiss did). Here we use \(12 ^{\circ} C\) as our reference temperature.
 
-Equations from Takehashi et al. 2002 do not LOOK similar to Weiss’s
+Equations from Takahashi et al. 2002 do not LOOK similar to Weiss’s
 equations, but they are nearly equivalent. At fixed salinity near full
 sea water, they essentially differ only by a constant.
 
