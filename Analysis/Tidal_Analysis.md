@@ -147,7 +147,7 @@ fpath <- file.path(sibling,fn)
 ```
 
 The following loads existing data, including a “temperature corrected”
-pCO<sub>2</sub> value based on Takehashi et al. 2002. It then collapses
+pCO<sub>2</sub> value based on Takahashi et al. 2002. It then collapses
 that data to daily summaries.
 
 > Takahashi, Taro & Sutherland, Stewart & Sweeney, Colm & Poisson, Alain
@@ -230,7 +230,7 @@ fpath <- file.path(neice,fn)
 Here we are dealing with NOAA’s API. We downloaded the data in “local
 standard time”, but we face the same problem we did importing temporal
 data for time of day (above). The function read\_csv implicitly imports
-time data in local clock time. We need to covert to Standard Time.
+time data in local clock time. We need to convert to Standard Time.
 
 ``` r
 tide_data <- read_csv(fpath, 
@@ -403,7 +403,7 @@ rm(all_data, hightide_data, tide_data)
 ### Initial Graphic
 
 We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to
-time since high tide,e WITHOUT accounting for autocorrelation.
+time since high tide, WITHOUT accounting for autocorrelation.
 
 Note also that we do not include linear predictor main effects for the
 seasons here. That is because we know, *a priori*, that the average
@@ -974,7 +974,7 @@ the_gls_2 <- gls(co2_corr ~ range:Season, correlation = corAR1(form = ~ d),
                  data = amplitude_data, na.action = na.exclude )
 ```
 
-USing the autocorrelation functions by date dramatically slows execution
+Using the autocorrelation functions by date dramatically slows execution
 of the GLS models, compared with using simple sequential
 autocorrelation, with only minimal changes in results.
 
