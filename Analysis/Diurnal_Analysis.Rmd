@@ -14,11 +14,18 @@ output:
 
 
 # Introduction
-This notebook and related notebooks document analysis of data derived from a multi-year deployment of ocean acidification monitoring equipment at the Southern Maine Community College pier, in South Portland.
+This notebook and related notebooks document analysis of data derived from a 
+multi-year deployment of ocean acidification monitoring equipment at the 
+Southern Maine Community College pier, in South Portland.
 
-The monitoring set up was designed and operated by Joe Kelly, of UNH and his colleagues, on behalf of the Casco Bay Estuary Partnership.  This was one of the first long-term OA monitoring facilities in the northeast, and was intended to test available technologies as well as gain operational experience working with acidification monitoring.
+The monitoring set up was designed and operated by Joe Kelly, of UNH and his
+colleagues, on behalf of the Casco Bay Estuary Partnership.  This was one of the
+first long-term OA monitoring facilities in the northeast, and was intended to
+test available technologies as well as gain operational experience working with
+acidification monitoring.
 
-In this Notebook, we develop formal Generalized Additive Model analyses of diurnal patterns, addressing autocorrelation.
+In this Notebook, we develop formal Generalized Additive Model analyses of 
+diurnal patterns, addressing autocorrelation.
 
 # Load Libraries
 ```{r load_libraries}
@@ -53,7 +60,9 @@ fn    <- 'CascoBayOAData.csv'
 fpath <- file.path(sibling,fn)
 ```
 
-The following loads existing data, including a "temperature corrected" pCO2 value based on Takehashi et al. 2002. It then collapses that data to daily summaries.
+The following loads existing data, including a "temperature corrected" pCO2 
+value based on Takahashi et al. 2002. It then collapses that data to daily 
+summaries.
 
 > Takahashi, Taro & Sutherland, Stewart & Sweeney, Colm & Poisson, Alain &
 > Metzl, Nicolas & Tilbrook, Bronte & Bates, Nicholas & Wanninkhof, Rik & Feely,
@@ -62,14 +71,20 @@ The following loads existing data, including a "temperature corrected" pCO2 valu
 > biological and temperature effects. Deep Sea Research Part II: Topical Studies
 > in Oceanography. 49. 1601-1622. 10.1016/S0967-0645(02)00003-6.
 
-(See the "Data_Review_And_Filtering" R Notebook for details on why and how we calculated temperature-corrected pCO2 values.)
+(See the "Data_Review_And_Filtering" R Notebook for details on why and how we 
+calculated temperature-corrected pCO2 values.)
 
 ## Read Data
 We add the Month and Season factor here for use in later graphics.
 
-Note that the original time coordinate here is in UTC, not local time. But by default, read_csv() interprets times according to the locale, here Eastern Standard Time or Eastern Daylight Time, depending on time of year.  I have not found an easy way to alter that behavior, but the force_tz() function in lubridate can fix it.
+Note that the original time coordinate here is in UTC, not local time. But by
+default, read_csv() interprets times according to the locale, here Eastern
+Standard Time or Eastern Daylight Time, depending on time of year.  I have not
+found an easy way to alter that behavior, but the force_tz() function in
+lubridate can fix it.
 
-Local time is more appropriate for graphics showing the effect of time of day on acidification parameters.  
+Local time is more appropriate for graphics showing the effect of time of day on 
+acidification parameters.  
 
 ```{r load_data} 
 all_data <- read_csv(fpath,
@@ -134,9 +149,13 @@ diurnal_data <- all_data %>%
 
 # Analyze pCO~2~ (Temperature Corrected) by Season
 ## Initial GAM model
-We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time of day while accounting for autocorrelation. This model does NOT fit autocorrelated errors.
+We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time of 
+day while accounting for autocorrelation. This model does NOT fit autocorrelated
+errors.
 
-Note also that we do not include linear predictor main effects for the seasons here.  That is because we know, *a priori*, that the average deviation from daily averages is zero, so there is intercept term.
+Note also that we do not include linear predictor main effects for the seasons
+here.  That is because we know, *a priori*, that the average deviation from 
+daily averages is zero, so there is intercept term.
 
 ```{r pco2_gam}
 system.time(pco2_gam <- gam(co2_corr_res ~  s(hh, by = Season, bs='cc'),
@@ -148,7 +167,8 @@ summary(pco2_gam)
 ```
 ### Check The Model
 #### Can We Omit Main Effects?
-Since our data are centered, the intercepts should be zero. Do our results change if we omit the seasonal main effects from the model?
+Since our data are centered, the intercepts should be zero. Do our results 
+change if we omit the seasonal main effects from the model?
 ```{r pco2_gam_b}
 system.time(pco2_gam_b <- gam(co2_corr_res ~  Season + s(hh, by = Season, bs='cc'),
                  data = diurnal_data, na.action = na.omit))
@@ -168,7 +188,9 @@ gam.check(pco2_gam)
 ```{r pco2_autocorrelation}
 pacf(resid(pco2_gam))
 ```
-So, the residuals continue to be large, with an AR(1) term on the order of 0.7.  Fluctuations in autocorrelations over longer lags appear to reflect the model, since residuals show a 24 hour periodicity.
+So, the residuals continue to be large, with an AR(1) term on the order of 0.7.  
+Fluctuations in autocorrelations over longer lags appear to reflect the model, 
+since residuals show a 24 hour periodicity.
 
 ### Predictions from GAM
 ```{r predictions}
@@ -181,7 +203,9 @@ newdat <- newdat %>%
 ```
 
 ### Ribbon Plot from GAM
-These ribbon plots show approximate 95% confidence intervals for the spline fits by season.  Here those confidence limits are deeply suspect, because the model does not take into account autocorrelation.
+These ribbon plots show approximate 95% confidence intervals for the spline fits 
+by season.  Here those confidence limits are deeply suspect, because the model 
+does not take into account autocorrelation.
 ```{r ribbon_plot_pco2_gam, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=hh, y=pred, color = Season)) + #geom_line() +
   geom_ribbon(aes(ymin = pred-(1.96*se),
@@ -200,22 +224,32 @@ ggplot(newdat, aes(x=hh, y=pred, color = Season)) + #geom_line() +
 ```
 
 ## Initial GAMM
-We want to fit an AR1() error term.  We tried using an AR(1) using the whole data set in one block, but that crashed my computer, requiring too much memory.
+We want to fit an AR1() error term.  We tried using an AR(1) using the whole
+data set in one block, but that crashed my computer, requiring too much memory.
 
-We also tried running a GAMM with an autocorrelation function set up to depend on an hourly time stamp, but it, too took too much memory, and crashed.
+We also tried running a GAMM with an autocorrelation function set up to depend
+on an hourly time stamp, but it, too took too much memory, and crashed.
 
-The simple autocorrelation function , which looks for correlations with successive observations (ignoring any recorded time coordinates), would be identical to  one based on a time stamp, IF there were no missing values.
+The simple autocorrelation function , which looks for correlations with
+successive observations (ignoring any recorded time coordinates), would be
+identical to  one based on a time stamp, IF there were no missing values.
 
-Interestingly, it appears that the corAR1 function, when the parameter form = NULL,  does not consider missing values at all.
+Interestingly, it appears that the corAR1 function, when the parameter 
+form = NULL,  does not consider missing values at all.
 
-To reduce memory requirements, we can look for autocorrelation structure in data subsets.  Here we use look for sequential (not temporal) autocorrelations within seasons.  Since there are very few season transitions, this should fit almost the same model as fitting a single autocorrelation structure across the whole data set.
+To reduce memory requirements, we can look for autocorrelation structure in 
+data subsets.  Here we use look for sequential (not temporal) autocorrelations
+within seasons.  Since there are very few season transitions, this should fit 
+almost the same model as fitting a single autocorrelation structure across the 
+whole data set.
 
 ```{r cleanup}
 rm(all_data)
 rm(m, p, pco2_gam)
 ```
 
-The following take ~ 15 minutes on a lightly loaded machine, and as long as 25 min on a machine with lots of other things going on.
+The following take ~ 15 minutes on a lightly loaded machine, and as long as 25
+min on a machine with lots of other things going on.
 ```{r cache = TRUE} 
 system.time(pco2_gam2 <- gamm(co2_corr_res ~  s(hh, by = Season, bs='cc', k=6),
                  correlation = corAR1(form = ~ 1 | Season),  # we run out of memory if we don't use a grouping
@@ -226,12 +260,14 @@ system.time(pco2_gam2 <- gamm(co2_corr_res ~  s(hh, by = Season, bs='cc', k=6),
 ```{r summary_pco2gamm_gam}
 summary(pco2_gam2$gam)
 ```
-Note the very low overall R squared here.  This simple model explains less than one fifth of the variation in deviations from daily average pCO~2~.
+Note the very low overall R squared here.  This simple model explains less than
+one fifth of the variation in deviations from daily average pCO~2~.
 
 ```{r summary_pco2gamm_lme}
 summary(pco2_gam2$lme)
 ```
-The primary insight from the LME summary is that the AR1 autocorrelation is estimated to be phi =  0.726214.
+The primary insight from the LME summary is that the AR1 autocorrelation is 
+estimated to be phi =  0.726214.
 
 ###  Model Predictions
 ```{r pco2_gam_predictions}
@@ -244,7 +280,9 @@ newdat <- newdat %>%
 #### Predictions are nearly identical
 ```{r}
 newdat %>%
-ggplot(aes(x=pred, y=pred2)) + geom_point(aes(color=Season)) + geom_abline(aes(slope = 1,intercept = 0))
+ggplot(aes(x=pred, y=pred2)) + 
+  geom_point(aes(color=Season)) + 
+  geom_abline(aes(slope = 1,intercept = 0))
 ```
 
 #### But standard Errors are different
@@ -258,7 +296,8 @@ ggplot(aes(x=se, y=se2)) + geom_point(aes(color=Season)) +
 ```
 
 ###  Ribbon Graphic
-These ribbon plots show approximate 95% confidence intervals for the spline fits by season.
+These ribbon plots show approximate 95% confidence intervals for the spline fits
+by season.
 ```{r ribbon_graphic, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=hh, y=pred2, color = Season)) + #geom_line() +
   geom_ribbon(aes(ymin = pred2-(1.96*se2),
@@ -277,16 +316,25 @@ ggplot(newdat, aes(x=hh, y=pred2, color = Season)) + #geom_line() +
 ```
 
 ## Formal comparisons of differences between GAM spline fits
-We follow ideas from (here)[https://fromthebottomoftheheap.net/2017/10/10/difference-splines-i/], which describes formal piecewise comparison of spline fits.  The idea is to manually calculate standard errors for a difference between two estimators, here the difference between seasonal values by hour.
+We follow ideas from (here)[https://fromthebottomoftheheap.net/2017/10/10/difference-splines-i/],
+which describes formal piecewise comparison of spline fits.  The idea is to 
+manually calculate standard errors for a difference between two estimators, 
+here the difference between seasonal values by hour.
 
 predict.gam returns an "lpmatrix" which
->  "yields the values of the linear predictor (minus any offset) when postmultiplied by the parameter vector....    The latter option is most useful for getting variance estimates for quantities derived from the model...."
+>  "yields the values of the linear predictor (minus any offset) when 
+   postmultiplied by the parameter vector....  The latter option is most useful 
+   for getting variance estimates for quantities derived from the model...."
 
 That is how we use it here.
 
-Note that the matrix is determined, in part, by the  type of contrasts used to fit the model.  Since we did not specify, the default treatment contrasts were used, comparing each level (Season) to the first level (Winter).
+Note that the matrix is determined, in part, by the  type of contrasts used to 
+fit the model.  Since we did not specify, the default treatment contrasts were 
+used, comparing each level (Season) to the first level (Winter).
 
-An alternative approach to hypothesis testing, which uses different model contrasts to test more holistically for differences between prediction curves ifs presented (here)[https://jacolienvanrij.com/Tutorials/GAMM.html].
+An alternative approach to hypothesis testing, which uses different model 
+contrasts to test more holistically for differences between prediction curves 
+is presented (here)[https://jacolienvanrij.com/Tutorials/GAMM.html].
 
 ```{r setup_formal_comparison}
 ## Which columns of m correspond to seasons of interest?
@@ -326,27 +374,38 @@ ggplot(data = NULL, aes(x = 0:23)) +
   geom_hline(yintercept = 0) +
   theme_cbep()
 ```
-So, apparent differences between winter and spring diurnal patterns are unlikely to be due to chance alone.  Although one should be careful with this analysis.  This approach implicitly makes multiple hourly comparisons, thus potentially inflating apparent statistical significance.
+So, apparent differences between winter and spring diurnal patterns are unlikely
+to be due to chance alone.  Although one should be careful with this analysis.
+This approach implicitly makes multiple hourly comparisons, thus potentially
+inflating apparent statistical significance.
 
-Most other potential contrasts show even larger differences in diurnal patterns. WE will not produce graphics for those,.  The other two seasons that provide similar values for much of the day are summer and fall, yet even here, the patterns are clearly distinct. 
+Most other potential contrasts show even larger differences in diurnal patterns.
+We will not produce graphics for those.  The other two seasons that provide
+similar values for much of the day are summer and fall, yet even here, the
+patterns are clearly distinct.
 
 ```{r second_comparison}
 mm_suf <- m[r3,] - m[r4,]
 mm_suf[, ! (c3 | c4)] <- 0
 dif <- mm_wsp %*% coef(pco2_gam2$gam)  # Use Matrix multiplication to estimate
 
-se <- sqrt(rowSums((mm_suf %*% vcov(pco2_gam2$gam, unconditional=TRUE)) * mm_suf))
+se <- sqrt(rowSums((mm_suf %*% 
+                      vcov(pco2_gam2$gam, unconditional=TRUE)) * mm_suf))
 upr <- dif + (qnorm(0.975) * se)
 lwr <- dif - (qnorm(0.975) * se)
 ggplot(data = NULL, aes(x = 0:23)) +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = cbep_colors()[1], alpha = 0.5) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), 
+              fill = cbep_colors()[1], alpha = 0.5) +
   geom_hline(yintercept = 0) +
   theme_cbep()
 ```
 
 
 # Other Models
-Several other GAMMs models used up all available memory, and could not be run.  Chances are, the limited model we just ran would UNDER estimate autocorrelation, but it's not clear by how much.  The effect would be to make our estimates of standard errors too small.
+Several other GAMMs models used up all available memory, and could not be run.
+Chances are, the limited model we just ran would UNDER estimate autocorrelation,
+but it's not clear by how much.  The effect would be to make our estimates of
+standard errors too small.
 
 ```{r cache = TRUE, eval = FALSE} 
 #rm(pco2_gam2)
@@ -360,9 +419,13 @@ if (FALSE) {
 
 ## Analysis of pH
 ### Initial GAM model
-We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time of day while accounting for autocorrelation. This model does NOT fit autocorrelated errors.
+We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time of 
+day while accounting for autocorrelation. This model does NOT fit autocorrelated 
+errors.
 
-Note also that we do not include linear predictor main effects for the seasons here.  That is because we know, *a priori*, that the average deviation from daily averages is zero, so there is intercept term.
+Note also that we do not include linear predictor main effects for the seasons 
+here.  That is because we know, *a priori*, that the average deviation from 
+daily averages is zero, so there is an intercept term.
 
 ```{r ph_gam}
 system.time(ph_gam <- gam(ph_res ~  s(hh, by = Season, bs='cc'),
@@ -374,7 +437,8 @@ summary(ph_gam)
 ```
 ### Check The Model
 #### Can We Omit Main Effects?
-Since our data are centered, the intercepts should be zero. Do our results change if we omit the seasonal main effects from the model?
+Since our data are centered, the intercepts should be zero. Do our results 
+change if we omit the seasonal main effects from the model?
 ```{r ph_gam_b}
 system.time(ph_gam_b <- gam(ph_res ~  Season + s(hh, by = Season, bs='cc'),
                  data = diurnal_data, na.action = na.omit))
@@ -389,12 +453,16 @@ rm(ph_gam_b)
 ```{r check_ph_gam}
 gam.check(ph_gam)
 ```
-There appears to be some structure to the residuals, and the residuals are very heavy tailed.  I would not trust standard error or P values much coming out of this analysis.
+There appears to be some structure to the residuals, and the residuals are very 
+heavy tailed.  I would not trust standard error or P values much coming out of 
+this analysis.
 ### Autocorrelation
 ```{r ph_autocorrelation}
 pacf(resid(ph_gam))
 ```
-So, the residuals continue to be large, with an AR(1) term on the order of 0.7.  Fluctuations in autocorrelations over longer lags appear to reflect the model, since residuals show a 12/24 hour periodicity.
+So, the residuals continue to be large, with an AR(1) term on the order of 0.7.  
+Fluctuations in autocorrelations over longer lags appear to reflect the model, 
+since residuals show a 12/24 hour periodicity.
 
 ### Predictions from GAM
 ```{r ph_predictions}
@@ -407,7 +475,9 @@ newdat <- newdat %>%
 ```
 
 ### Ribbon Plot from GAM
-These ribbon plots show approximate 95% confidence intervals for the spline fits by season.  Here those confidence limits are deeply suspect, because the model does not take into account autocorrelation.
+These ribbon plots show approximate 95% confidence intervals for the spline fits 
+by season.  Here those confidence limits are deeply suspect, because the model 
+does not take into account autocorrelation.
 ```{r ribbon_plot_ph_gam, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=hh, y=pred, color = Season)) + #geom_line() +
   geom_ribbon(aes(ymin = pred-(1.96*se),
@@ -426,15 +496,24 @@ ggplot(newdat, aes(x=hh, y=pred, color = Season)) + #geom_line() +
 ```
 
 ## Initial GAMM
-We want to fit an AR1() error term.  We tried using an AR(1) using the whole data set in one block, but that crashed my computer, requiring too much memory.
+We want to fit an AR1() error term.  We tried using an AR(1) using the whole 
+data set in one block, but that crashed my computer, requiring too much memory.
 
-We also tried running a GAMM with an autocorrelation function set up to depend on an hourly time stamp, but it, too took too much memory, and crashed.
+We also tried running a GAMM with an autocorrelation function set up to depend 
+on an hourly time stamp, but it, too took too much memory, and crashed.
 
-The simple autocorrelation function , which looks for correlations with successive observations (ignoring any recorded time coordinates), would be identical to  one based on a time stamp, IF there were no missing values.
+The simple autocorrelation function , which looks for correlations with
+successive observations (ignoring any recorded time coordinates), would be 
+identical to  one based on a time stamp, IF there were no missing values.
 
-Interestingly, it appears that the corAR1 function, when the parameter form = NULL,  does not consider missing values at all.
+Interestingly, it appears that the corAR1 function, when the parameter 
+form = NULL,  does not consider missing values at all.
 
-To reduce memory requirements, we can look for autocorrelation structure in data subsets.  Here we use look for sequential (not temporal) autocorrelations within seasons.  Since there are very few season transitions, this should fit almost the same model as fitting a single autocorrelation structure across the whole data set.
+To reduce memory requirements, we can look for autocorrelation structure in 
+data subsets.  Here we use look for sequential (not temporal) autocorrelations
+within seasons.  Since there are very few season transitions, this should fit 
+almost the same model as fitting a single autocorrelation structure across the 
+whole data set.
 
 ```{r cleanup_2}
 rm(all_data)
@@ -448,17 +527,20 @@ system.time(ph_gam <- gamm(ph_res ~  s(hh, by = Season, bs='cc', k=6),
                  data = diurnal_data))
 ```
 
-Revising that to run off the actual time stamp did not work - -t ran for well over an hour before crashing.
+Revising that to run off the actual time stamp did not work.  It ran for well 
+over an hour before crashing.
 
 ```{r summary_ph_gamm_gam}
 summary(ph_gam$gam)
 ```
-Note the very low overall R squared here.  This simple model explains less than one fifth of the variation in deviations from daily average pCO~2~.
+Note the very low overall R squared here.  This simple model explains less than 
+one fifth of the variation in deviations from daily average pCO~2~.
 
 ```{r summary_ph_gamm_lme}
 summary(ph_gam$lme)
 ```
-The primary insight from the LME summary is that the AR1 autocorrelation is estimated to be phi =  0.726214.
+The primary insight from the LME summary is that the AR1 autocorrelation is 
+estimated to be phi =  0.726214.
 
 ###  Model Predictions
 ```{r ph_gamm_predictions}
@@ -471,7 +553,9 @@ newdat <- newdat %>%
 #### Predictions are nearly identical
 ```{r compare_predictions_ph}
 newdat %>%
-ggplot(aes(x=pred, y=pred2)) + geom_point(aes(color=Season)) + geom_abline(aes(slope = 1,intercept = 0))
+ggplot(aes(x=pred, y=pred2)) + 
+  geom_point(aes(color=Season)) + 
+  geom_abline(aes(slope = 1,intercept = 0))
 ```
 
 #### But standard Errors are different
@@ -485,7 +569,8 @@ ggplot(aes(x=se, y=se2)) + geom_point(aes(color=Season)) +
 ```
 
 ###  Ribbon Graphic
-These ribbon plots show approximate 95% confidence intervals for the spline fits by season.
+These ribbon plots show approximate 95% confidence intervals for the spline fits
+by season.
 ```{r ribbon_graphic_ph, fig.width = 4, fig.height = 4}
 ggplot(newdat, aes(x=hh, y=pred2, color = Season)) + #geom_line() +
   geom_ribbon(aes(ymin = pred2-(1.96*se2),
@@ -504,16 +589,25 @@ ggplot(newdat, aes(x=hh, y=pred2, color = Season)) + #geom_line() +
 ```
 
 ## Formal comparisons of differences between GAM spline fits
-We follow ideas from (here)[https://fromthebottomoftheheap.net/2017/10/10/difference-splines-i/], which describes formal piecewise comparison of spline fits.  The idea is to manually calculate standard errors for a difference between two estimators, here the difference between seasonal values by hour.
+We follow ideas from (here)[https://fromthebottomoftheheap.net/2017/10/10/difference-splines-i/],
+which describes formal piecewise comparison of spline fits.  The idea is to 
+manually calculate standard errors for a difference between two estimators, 
+here the difference between seasonal values by hour.
 
 predict.gam returns an "lpmatrix" which
->  "yields the values of the linear predictor (minus any offset) when postmultiplied by the parameter vector....    The latter option is most useful for getting variance estimates for quantities derived from the model...."
+>  "yields the values of the linear predictor (minus any offset) when 
+   postmultiplied by the parameter vector.... The latter option is most useful 
+   for getting variance estimates for quantities derived from the model...."
 
 That is how we use it here.
 
-Note that the matrix is determined, in part, by the  type of contrasts used to fit the model.  Since we did not specify, the default treatment contrasts were used, comparing each level (Season) to the first level (Winter).
+Note that the matrix is determined, in part, by the  type of contrasts used to
+fit the model.  Since we did not specify, the default treatment contrasts were
+used, comparing each level (Season) to the first level (Winter).
 
-An alternative approach to hypothesis testing, which uses different model contrasts to test more holistically for differences between prediction curves ifs presented (here)[https://jacolienvanrij.com/Tutorials/GAMM.html].
+An alternative approach to hypothesis testing, which uses different model 
+contrasts to test more holistically for differences between prediction curves 
+is presented (here)[https://jacolienvanrij.com/Tutorials/GAMM.html].
 
 ```{r setup_formal_comparison_ph}
 ## Which columns of m correspond to seasons of interest?
@@ -549,26 +643,33 @@ lwr <- dif - (qnorm(0.975) * se)
 
 ```{r plot_comparison_ph}
 ggplot(data = NULL, aes(x = 0:23)) +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = cbep_colors()[1], alpha = 0.5) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), 
+              fill = cbep_colors()[1], alpha = 0.5) +
   geom_hline(yintercept = 0) +
   theme_cbep()
 ```
-So, apparent differences between winter and spring diurnal patterns are unlikely to be due to chance alone.  Although one should be careful with this analysis.  This approach implicitly makes multiple hourly comparisons, thus potentially inflating apparent statistical significance.
+So, apparent differences between winter and spring diurnal patterns are unlikely
+to be due to chance alone.  Although one should be careful with this analysis.
+This approach implicitly makes multiple hourly comparisons, thus potentially
+inflating apparent statistical significance.
 
-Most other potential contrasts show even larger differences in diurnal patterns. WE will not produce graphics for those,.  The other two seasons that provide similar values for much of the day are summer and fall, yet even here, the patterns are clearly distinct. 
+Most other potential contrasts show even larger differences in diurnal patterns.
+We will not produce graphics for those,.  The other two seasons that provide
+similar values for much of the day are summer and fall, yet even here, the
+patterns are clearly distinct.
 
 ```{r second_comparison_ph}
 mm_suf <- m[r3,] - m[r4,]
 mm_suf[, ! (c3 | c4)] <- 0
 dif <- mm_wsp %*% coef(pco2_gam2$gam)  # Use Matrix multiplication to estimate
 
-se <- sqrt(rowSums((mm_suf %*% vcov(pco2_gam2$gam, unconditional=TRUE)) * mm_suf))
+se <- sqrt(rowSums((mm_suf %*% vcov(pco2_gam2$gam, 
+                                    unconditional=TRUE)) * mm_suf))
 upr <- dif + (qnorm(0.975) * se)
 lwr <- dif - (qnorm(0.975) * se)
 ggplot(data = NULL, aes(x = 0:23)) +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = cbep_colors()[1], alpha = 0.5) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), 
+              fill = cbep_colors()[1], alpha = 0.5) +
   geom_hline(yintercept = 0) +
   theme_cbep()
 ```
-
-

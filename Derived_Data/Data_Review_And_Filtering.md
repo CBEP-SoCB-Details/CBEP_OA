@@ -2,44 +2,40 @@ Preparation of Casco Bay OA Data
 ================
 Curtis C. Bohlen, Casco Bay Estuary Partnership
 
-  - [Load Libraries](#load-libraries)
-  - [Load Data](#load-data)
-      - [Establish Folder Reference](#establish-folder-reference)
-      - [Load data from identical excel
+-   [Load Libraries](#load-libraries)
+-   [Load Data](#load-data)
+    -   [Establish Folder Reference](#establish-folder-reference)
+    -   [Load data from identical excel
         spreadsheets](#load-data-from-identical-excel-spreadsheets)
-      - [Combine Data](#combine-data)
-  - [Corrections](#corrections)
-      - [Records that have no Data](#records-that-have-no-data)
-          - [Demonstrate the Problem](#demonstrate-the-problem)
-          - [Drop records](#drop-records)
-      - [Bad PH Data](#bad-ph-data)
-          - [Graph of pH data over time](#graph-of-ph-data-over-time)
-          - [Graph of pH versus
+    -   [Combine Data](#combine-data)
+-   [Corrections](#corrections)
+    -   [Records that have no Data](#records-that-have-no-data)
+        -   [Demonstrate the Problem](#demonstrate-the-problem)
+        -   [Drop records](#drop-records)
+    -   [Bad PH Data](#bad-ph-data)
+        -   [Graph of pH data over time](#graph-of-ph-data-over-time)
+        -   [Graph of pH versus
             Alkalinity](#graph-of-ph-versus-alkalinity)
-          - [Graph of Alkalinity
-            vs. Salinity](#graph-of-alkalinity-vs.-salinity)
-          - [Graph of pH vs. Temperature](#graph-of-ph-vs.-temperature)
-          - [Review 2017 Data Details](#review-2017-data-details)
-          - [Review 2015 Data Details](#review-2015-data-details)
-      - [Remove Questionable Data](#remove-questionable-data)
-          - [Show What pH Data Will be
+        -   [Graph of Alkalinity
+            vs. Salinity](#graph-of-alkalinity-vs-salinity)
+        -   [Graph of pH vs. Temperature](#graph-of-ph-vs-temperature)
+        -   [Review 2017 Data Details](#review-2017-data-details)
+        -   [Review 2015 Data Details](#review-2015-data-details)
+    -   [Remove Questionable Data](#remove-questionable-data)
+        -   [Show What pH Data Will be
             Removed](#show-what-ph-data-will-be-removed)
-          - [Remove Unwanted Data](#remove-unwanted-data)
-      - [One additional point](#one-additional-point)
-  - [Data Cleanup](#data-cleanup)
-  - [Calculate Changed Units for Dissolved
-    Oxygen.](#calculate-changed-units-for-dissolved-oxygen.)
-  - [Temperature Corrected pCO2](#temperature-corrected-pco2)
-      - [What do those equations imply?](#what-do-those-equations-imply)
-      - [Takehashi et al. 2002
-        Relationships](#takehashi-et-al.-2002-relationships)
-          - [“Expected pCO<sub>2</sub>” at Observed
-            Temperature](#expected-pco2-at-observed-temperature)
-          - [“Temperature Corrected”
-            pCO<sub>2</sub>](#temperature-corrected-pco2-1)
-      - [Calculation of Temperature Corrected
+        -   [Remove Unwanted Data](#remove-unwanted-data)
+    -   [One additional point](#one-additional-point)
+-   [Data Cleanup](#data-cleanup)
+-   [Calculate Changed Units for Dissolved
+    Oxygen.](#calculate-changed-units-for-dissolved-oxygen)
+-   [Temperature Corrected pCO2](#temperature-corrected-pco2)
+    -   [What do those equations imply?](#what-do-those-equations-imply)
+    -   [Takahashi et al. 2002
+        Relationships](#takahashi-et-al-2002-relationships)
+    -   [Calculation of Temperature Corrected
         pCO<sub>2</sub>](#calculation-of-temperature-corrected-pco2)
-  - [Output Cleaned Data](#output-cleaned-data)
+-   [Output Cleaned Data](#output-cleaned-data)
 
 <img
     src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
@@ -51,14 +47,24 @@ Curtis C. Bohlen, Casco Bay Estuary Partnership
 library(tidyverse)
 ```
 
-    ## -- Attaching packages ---------------------------------------------------------------------------------------------------------------- tidyverse 1.3.0 --
+    ## Warning: package 'tidyverse' was built under R version 4.0.5
 
-    ## v ggplot2 3.3.2     v purrr   0.3.4
-    ## v tibble  3.0.1     v dplyr   1.0.0
-    ## v tidyr   1.1.0     v stringr 1.4.0
-    ## v readr   1.3.1     v forcats 0.5.0
+    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
 
-    ## -- Conflicts ------------------------------------------------------------------------------------------------------------------- tidyverse_conflicts() --
+    ## v ggplot2 3.3.5     v purrr   0.3.4
+    ## v tibble  3.1.6     v dplyr   1.0.7
+    ## v tidyr   1.1.4     v stringr 1.4.0
+    ## v readr   2.1.0     v forcats 0.5.1
+
+    ## Warning: package 'ggplot2' was built under R version 4.0.5
+
+    ## Warning: package 'tidyr' was built under R version 4.0.5
+
+    ## Warning: package 'dplyr' was built under R version 4.0.5
+
+    ## Warning: package 'forcats' was built under R version 4.0.5
+
+    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
     ## x dplyr::filter() masks stats::filter()
     ## x dplyr::lag()    masks stats::lag()
 
@@ -99,7 +105,7 @@ for (yr in c(2015, 2016, 2017, 2018)) {
   n <- names(df)
   n <- sub('_median', '', n)
   names(df) <- n
-  the_data <- append(the_data, list(df))  #  add datframe to a list of dataframes. 
+  the_data <- append(the_data, list(df))  # add datframe to a list of dataframes. 
 }
 ```
 
@@ -108,14 +114,14 @@ for (yr in c(2015, 2016, 2017, 2018)) {
 ``` r
 the_data <- bind_rows(the_data) %>%
   select(-yyyymmdd, -Matlab_datenum, -FET_TEMP_CON) %>%
-  mutate(datetime = ISOdatetime(yyyy, mm, dd, hh,0,0, 'America/New_York')) %>%
+  mutate(datetime = ISOdatetime(yyyy, mm, dd, hh,0,0, 'UTC')) %>%
   mutate(doy = as.numeric(strftime(datetime, format = "%j")))
 ```
 
 # Corrections
 
 In downstream analysis steps, We uncovered duplicate dates and times,
-but al lduiplicate rows lack data, specifically from January of 2016. We
+but all duplicate rows lack data, specifically from January of 2016. We
 filter them out here.
 
 ## Records that have no Data
@@ -123,12 +129,12 @@ filter them out here.
 ### Demonstrate the Problem
 
 ``` r
-the_data %>% select(datetime) %>% group_by(datetime) %>% summarize(n = n()) %>% filter(n>1) %>% arrange(datetime)
+the_data %>% select(datetime) %>% group_by(datetime) %>% summarize(n = n()) %>% 
+  filter(n>1) %>% 
+  arrange(datetime)
 ```
 
-    ## `summarise()` ungrouping output (override with `.groups` argument)
-
-    ## # A tibble: 475 x 2
+    ## # A tibble: 474 x 2
     ##    datetime                n
     ##    <dttm>              <int>
     ##  1 2016-01-01 00:00:00     2
@@ -141,7 +147,7 @@ the_data %>% select(datetime) %>% group_by(datetime) %>% summarize(n = n()) %>% 
     ##  8 2016-01-01 07:00:00     2
     ##  9 2016-01-01 08:00:00     2
     ## 10 2016-01-01 09:00:00     2
-    ## # ... with 465 more rows
+    ## # ... with 464 more rows
 
 ### Drop records
 
@@ -176,7 +182,7 @@ are infrequent, some judgment is required to decide which observations
 to exclude from further analysis.
 
 Sudden drops in pH to unlikely levels are one potential sign of problems
-wit hthe data. Another sign is if the calculated alkalinity associated
+with the data. Another sign is if the calculated alkalinity associated
 with a low pH observation is unreasonable for sea water (say below about
 1000).
 
@@ -196,6 +202,7 @@ plt
     ## Warning: Removed 8224 rows containing missing values (geom_point).
 
 ![](Data_Review_And_Filtering_files/figure-gfm/ph_time_graph-1.png)<!-- -->
+
 I note low pH excursions in 2015, perhaps 2016, and most of 2017. But
 note that the fist “spike” of low values in 2015 lack alkalinity
 calculations, presumably because other required data was not available.
@@ -219,6 +226,7 @@ plt
     ## Warning: Removed 14131 rows containing missing values (geom_point).
 
 ![](Data_Review_And_Filtering_files/figure-gfm/ph_alkalinity_graph-1.png)<!-- -->
+
 The most obvious problematic data (with very low alkalinity AND very low
 pH) are from 2015 and 2017.
 
@@ -238,6 +246,7 @@ plt
     ## Warning: Removed 14139 rows containing missing values (geom_point).
 
 ![](Data_Review_And_Filtering_files/figure-gfm/alkalinity_salinity%20graph-1.png)<!-- -->
+
 Again, what jumps out are the points with low pH in 2017 and 2015.
 Although the HIGH alkalinity observations from early in 2017 also look
 off-base.
@@ -262,6 +271,7 @@ plt
     ## Warning: Removed 8289 rows containing missing values (geom_point).
 
 ![](Data_Review_And_Filtering_files/figure-gfm/pH_temp_graph-1.png)<!-- -->
+
 I see no simple way to eliminate the questionable data. There are “bad”
 data popping up several times. It’s mostly the 2017 data, but there may
 also be problematic data in 2015 and 2016.
@@ -294,6 +304,7 @@ plt
 ```
 
 ![](Data_Review_And_Filtering_files/figure-gfm/closeup_ph_time_graph_2-1.png)<!-- -->
+
 That shows a low pH period, in September around end of September 8
 through Sept 14. The period may actually have started just before the
 data gap, around August 17th. A second period of low pH falls around
@@ -347,7 +358,7 @@ changes are removed.
 
 ### Remove Unwanted Data
 
-TO trim the data, we use the flags to set to NA any variables that
+To trim the data, we use the flags to set to NA any variables that
 depend on accurate pH values, and then toss out any data that lacks
 remaining valid observations.
 
@@ -368,7 +379,7 @@ There is a single point that is recorded as being collected on January
 20, 2016, which appears to be an error in several dimensions. First, the
 instrument was de-deployed right around that time, and this timestamp is
 25 hours after the prior observation, which is unlikely. Temperature is
-sky high for January, and the pH is unreasonably low. WE interpret this
+sky high for January, and the pH is unreasonably low. We interpret this
 value as being a measurement that should have been removed during QA/QC
 because it was probably collected when the device was out of the water
 and in transit back to the lab for servicing.
@@ -388,7 +399,7 @@ trimmed_data[(arow-3):(arow+2),]
     ## 5  2016     6     2    17      13.5      3.59           29.6          14.6
     ## 6  2016     6     2    18      14.5      3.61           29.2          14.6
     ## # ... with 10 more variables: SAMI_CO2 <dbl>, Optode_O2 <dbl>, FET_PHINT <dbl>,
-    ## #   FET_PHEXT <dbl>, `omega-a` <dbl>, `omega-c` <dbl>, TA_calc <dbl>,
+    ## #   FET_PHEXT <dbl>, omega-a <dbl>, omega-c <dbl>, TA_calc <dbl>,
     ## #   DIC_calc <dbl>, datetime <dttm>, doy <dbl>
 
 ``` r
@@ -429,16 +440,17 @@ trimmed_data <- trimmed_data %>%
 # Calculate Changed Units for Dissolved Oxygen.
 
 In most policy contexts, dissolved oxygen is measured in units of
-milligrams per liter. Here we provide an approximate conversion. Density
-of sea water is close to 1.027 g/ml (which is equal to kg/l) at 12
-degrees C and 30 ppt. It varies in the third decimal place based on
+milligrams per liter. Here we provide an approximate conversion.
+
+Density of sea water is close to 1.027 g/ml (which is equal to kg/l) at
+12 degrees C and 30 ppt. It varies in the third decimal place based on
 temperature and in the second decimal place by salinity.
 
-\[ DO_{mg/l} = DO_{\mu Mole/kg} \times \frac {1.027 ~ kg}{l}
-\times \frac{1 ~ Mole}{10^6  ~ \mu Mole}
-\times \frac {15.99 ~  g  ~ 02}{Mole}
-\times \frac {2 ~ Moles ~ O} {Mole ~ O_{2}}
-\times \frac {1000~mg}{g}\]
+$$ DO\_{mg/l} = DO\_{\\mu Mole/kg} \\times \\frac {1.027 \~ kg}{l}
+\\times \\frac{1 \~ Mole}{10^6  \~ \\mu Mole}
+\\times \\frac {15.99 \~  g  \~ O}{Mole}
+\\times \\frac {2 \~ Moles \~ O} {Mole \~ O\_{2}}
+\\times \\frac {1000\~mg}{g} $$
 
 ``` r
 trimmed_data <- trimmed_data %>%
@@ -465,22 +477,21 @@ thermodynamic equilibrium with \[CO<sub>2</sub>\] in the water, (where
 \[CO<sub>2</sub>\] here (by convention) refers to the sum of activities
 of CO<sub>2</sub> and H<sub>2</sub>CO<sub>3</sub> in solution.
 
-\[ CO_{2(g)}
-\stackrel {K_{0}} {\longleftrightarrow} 
-[CO_{2(aq.)}] \]
+$$ CO\_{2(g)}
+\\stackrel {K\_{0}} {\\longleftrightarrow} 
+\[CO\_{2(aq.)}\] $$
 
 Thus at equilibrium,
 
-\[fCO_{2} = [CO_{2(aq.)}] / K_{0}\]
+*f**C**O*<sub>2</sub> = \[*C**O*<sub>2(*a**q*.)</sub>\]/*K*<sub>0</sub>
 
-where \(fCO_{2}\), the *fugacity* of CO<sub>2</sub>, is “virtually equal
-to the partial pressure.” Unfortunately, \(K_{0}\) is not constant, but
-depends on temperature and salinity. One semi-empirical model for that
-relationship is the following (From Weiss 1974 but also presented
-elsewhere):
+where *f**C**O*<sub>2</sub>, the *fugacity* of CO<sub>2</sub>, is
+“virtually equal to the partial pressure.” Unfortunately,
+*K*<sub>0</sub> is not constant, but depends on temperature and
+salinity. One semi-empirical model for that relationship is the
+following (From Weiss 1974 but also presented elsewhere):
 
-\[ ln~K_{0} = -60.2409 + 93.4517(100/T) + 23.3585 \times ln(T/100) + 
-S * [0.023517 - 0.023656 * (T/100) + 0.0047036 *(T/100)^2] \]
+*l**n* *K*<sub>0</sub> =  − 60.2409 + 93.4517(100/*T*) + 23.3585 × *l**n*(*T*/100) + *S* \* \[0.023517 − 0.023656 \* (*T*/100) + 0.0047036 \* (*T*/100)<sup>2</sup>\]
 
 (Note that temperatures need to be expressed in Kelvin)
 
@@ -490,11 +501,12 @@ S * [0.023517 - 0.023656 * (T/100) + 0.0047036 *(T/100)^2] \]
 ## What do those equations imply?
 
 Here we make a graph that shows the magnitude of the conversion factor
-(\(1/K_{0}\)), which converts from observed \(pCO_{2} \approx fCO_{2}\)
-to \([CO_{2}]\) (from the last equation, above) over the range of
-temperatures and salinities we are mostly concerned with. This shows how
-measured pCO<sub>2</sub> will vary based on temperature and salinity
-changes alone – even without actual changes in the concentration of
+(1/*K*<sub>0</sub>), which converts from observed
+*p**C**O*<sub>2</sub> ≈ *f**C**O*<sub>2</sub> to \[*C**O*<sub>2</sub>\]
+(from the last equation, above) over the range of temperatures and
+salinities we are mostly concerned with. This shows how measured
+pCO<sub>2</sub> will vary based on temperature and salinity changes
+alone – even without actual changes in the concentration of
 CO<sub>2</sub>.
 
 ``` r
@@ -529,10 +541,10 @@ change in observed pCO<sub>2</sub> of about a factor of two even in the
 absence of processes that change the concentration of CO<sub>2</sub> in
 the Bay.
 
-## Takehashi et al. 2002 Relationships
+## Takahashi et al. 2002 Relationships
 
 Here we follow a formula for calculating a “Temperature Corrected”
-pCO<sub>2</sub>, which is derived from methods in Takehashi et al. 2002.
+pCO<sub>2</sub>, which is derived from methods in Takahashi et al. 2002.
 The “temperature corrected” version adjusts for the thermodynamic effect
 of temperature on pCO<sub>2</sub> just discussed.
 
@@ -551,22 +563,22 @@ pCO<sub>2</sub>, as estimates of the magnitude of the fluctuations in
 pCO<sub>2</sub> one would expect to see due to temperature alone, if
 there were no changes in \[CO<sub>2</sub>\].
 
-The Takehashi et al. 2002 equations are as follows:
+The Takahashi et al. 2002 equations are as follows:
 
 #### “Expected pCO<sub>2</sub>” at Observed Temperature
 
-\[(pCO_{2} \textrm{ at }T_{obs}) = (pCO_{2})_{obs} \times exp(0.0423(T_{obs}- T_{mean})\]
+(*p**C**O*<sub>2</sub> at *T*<sub>*o**b**s*</sub>) = (*p**C**O*<sub>2</sub>)<sub>*o**b**s*</sub> × *e**x**p*(0.0423(*T*<sub>*o**b**s*</sub> − *T*<sub>*m**e**a**n*</sub>)
 
 #### “Temperature Corrected” pCO<sub>2</sub>
 
-\[(pCO_{2} \textrm{ at }T_{mean}) = (pCO_{2})_{obs} \times exp(0.0423(T_{mean}- T_{obs})\]
+(*p**C**O*<sub>2</sub> at *T*<sub>*m**e**a**n*</sub>) = (*p**C**O*<sub>2</sub>)<sub>*o**b**s*</sub> × *e**x**p*(0.0423(*T*<sub>*m**e**a**n*</sub> − *T*<sub>*o**b**s*</sub>)
 
 This is approach addresses the thermal dependence of pCO<sub>2</sub> by
 calculating what the observed pCO<sub>2</sub> would have been at some
 reference temperature (rather than estimating \[CO<sub>2</sub>\] as
-Weiss did). Here we use \(12 ^{\circ} C\) as our reference temperature.
+Weiss did). Here we use 12<sup>∘</sup>*C* as our reference temperature.
 
-Equations from Takehashi et al. 2002 do not LOOK similar to Weiss’s
+Equations from Takahashi et al. 2002 do not LOOK similar to Weiss’s
 equations, but they are nearly equivalent. At fixed salinity near full
 sea water, they essentially differ only by a constant.
 

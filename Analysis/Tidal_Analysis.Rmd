@@ -35,7 +35,6 @@ library(mgcv)
 library(CBEPgraphics)
 load_cbep_fonts()
 theme_set(theme_cbep())
-
 ```
 
 # Color Palette
@@ -59,7 +58,7 @@ fpath <- file.path(sibling,fn)
 ```
 
 The following loads existing data, including a "temperature corrected" pCO~2~
-value based on Takehashi et al. 2002. It then collapses that data to daily
+value based on Takahashi et al. 2002. It then collapses that data to daily
 summaries.
 
 > Takahashi, Taro & Sutherland, Stewart & Sweeney, Colm & Poisson, Alain &
@@ -137,7 +136,7 @@ fpath <- file.path(neice,fn)
 Here we are dealing with NOAA's API.  We downloaded the data in "local standard
 time", but we face the same problem we did importing temporal data for time of
 day (above).  The function read_csv implicitly imports time data in local clock
-time.  We need to covert to Standard Time.
+time.  We need to convert to Standard Time.
 ```{r load_tide_data}
 tide_data <- read_csv(fpath, 
                        col_types =
@@ -224,7 +223,6 @@ tmp <- all_data %>%
 amplitude_data <- amplitude_data %>%
   left_join(tmp, by = 'd') %>%
   filter(! (is.na(ph) & is.na(co2) & is.na(co2_corr)))
-
 rm(tmp)
 ```
 
@@ -295,7 +293,7 @@ rm(all_data, hightide_data, tide_data)
 ## PCO~2~ Analysis
 ### Initial Graphic
 We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time 
-since high tide,e WITHOUT accounting for autocorrelation.
+since high tide, WITHOUT accounting for autocorrelation.
 
 Note also that we do not include linear predictor main effects for the seasons
 here.  That is because we know, *a priori*, that the average deviation from
@@ -360,9 +358,11 @@ system.time(pco2_gam <- gamm(co2_corr_res ~  s(minssincehigh, by = Season,
                  correlation = corAR1(form = ~ 1 | Season),  
                  data = tidal_data))
 ```
+
 ```{r summary_pco2_gamm_gam}
 summary(pco2_gam$gam)
 ```
+
 ```{r summary_pco2_gamm_lme}
 summary(pco2_gam$lme)
 ```
@@ -403,7 +403,6 @@ ggplot(newdat, aes(x=minssincehigh, y=pred, color = Season)) + #geom_line() +
 ### Initial Graphic
 We fit a simple model, that fits a GAM smoother (cyclic cubic spline) to time 
 since high tide WITHOUT accounting for autocorrelation.
-
 ```{r tidal_ph_graphic_cyclical, fig.width = 7, fig.height = 5}
 ggplot(tidal_data, aes(minssincehigh, ph_res)) + 
   geom_point(alpha = 0.05, color = cbep_colors()[5]) +
@@ -425,6 +424,7 @@ ggplot(tidal_data, aes(minssincehigh, ph_res)) +
   xlab('Hours Since High Tide') +
   ylab(expression (atop(pH, Difference~From~Tide~Cycle~Average))) 
 ```
+
 Visually, the pattern is far less clear here than for pCO~2~. 
 
 ### GAM Model
@@ -436,12 +436,14 @@ system.time(ph_gam <- gam(ph_res ~  s(minssincehigh, by = Season, bs='cc'),
 ```{r gam_summary_ph}
 summary(ph_gam)
 ```
-Allfour seasonal patterns are judged unlikely to be due solely to chance, but we 
+
+All four seasonal patterns are judged unlikely to be due solely to chance, but we 
 have not yet considered autocorrelation between successive observations.
 
 ```{r check_pH_gam}
 gam.check(ph_gam)
 ```
+
 Other than heavy tails, I see nothing here that suggests any major pathologies 
 to this model.  The heavy tails are expected with high temporal autocorrelation.
 
@@ -498,7 +500,6 @@ ggplot(newdat, aes(x=minssincehigh, y=pred, color = Season)) +
   
   xlab('Hours since High Tide') +
   ylab(expression (atop(pH, Difference~From~Tide~Cycle~Average)))
-  
 ```
 
 # Analysis of Spring Tide - Neap Cycles  
@@ -545,6 +546,7 @@ amplitude_data %>% select(range, co2_corr, Season) %>%
   mutate(Type = rep(c('Pearson', 'Spearman', 'Kendall'),4)) %>%
   select(Season, Type, correl_coef)
 ```
+
 These are fairly low correlations.  The only ones that look meaningfully (as 
 opposed to significantly) correlated are for summer...
 
@@ -557,13 +559,15 @@ the_gls <- gls(co2_corr ~ range*Season, correlation = corAR1(form = ~ d),
 the_gls_2 <- gls(co2_corr ~ range:Season, correlation = corAR1(form = ~ d),
                  data = amplitude_data, na.action = na.exclude )
 ```
-USing the autocorrelation functions by date dramatically slows execution of the 
+
+Using the autocorrelation functions by date dramatically slows execution of the 
 GLS models, compared  with using simple sequential autocorrelation, with only 
 minimal changes in results.
 
 ```{r summary_pco2_amplitude_lm}
 summary(the_lm)
 ```
+
 This suggests we need to look at the pattern seasonally.  Summer is judged
 nearly statistically significantly different from Winter, which here is the
 reference level of Season.  Following good practice, that suggests we should not
@@ -576,6 +580,7 @@ compare results of a generalized least squares model.
 ```{r summary_pco2_amplitude_gls}
 summary(the_gls)
 ```
+
 This analysis, which includes consideration of the  high autocorrelation between
 successive observations, suggests that the regressions lines are not
 significantly different between seasons, and the main effects of range is not
@@ -584,6 +589,7 @@ statistically significant.  That suggests there is nothing here to see.
 ```{r summary_pco2_amplitude_gls_2}
 summary(the_gls_2)
 ```
+
 So, fitting four separate slopes, we also don't see statistically significant
 relationships with tidal range.  The evidence is weak for an important effect of
 tidal amplitude on pCO~2~ at any season.
@@ -602,7 +608,6 @@ terms for the three added predictor variables. Results (for our purposes here)
 did not differ materially.  In all cases, the effect of tidal range on pCO~2~
 remains statistically unimportant.
 
-
 ```{r pco2_aplitude_gamm,  cache = TRUE}
 system.time(
 the_gamm  <- gamm(co2_corr ~ range*Season + s(temp) + s(sal) + s(do), 
@@ -613,6 +618,7 @@ the_gamm  <- gamm(co2_corr ~ range*Season + s(temp) + s(sal) + s(do),
 ```{r summary(pco2_amplitude_gamm_gam)}
 summary(the_gamm$gam)
 ```
+
 So, that changes little. Although we see statistically significant relationships
 with all three predictor variables, we see no evidence for a significant
 relationship between daily tidal amplitudes and daily median pCO~2~.
@@ -652,6 +658,7 @@ amplitude_data %>% select(range, ph, Season) %>%
   mutate(Type = rep(c('Pearson', 'Spearman', 'Kendall'),4)) %>%
   select(Season, Type, correl_coef)
 ```
+
 These are fairly low correlations.  The only ones that look meaningfully (as 
 opposed to significantly) correlated are for winter....
 
@@ -666,6 +673,7 @@ the_gls <- gls(ph ~ range*Season, correlation = corAR1(form = ~ d),
 ```{r summary_linear_model_ph_amplitude}
 summary(the_lm)
 ```
+
 There is no evidence here that tidal amplitude plays a role in pH, despite the 
 moderately high correlation in winter.  This is probably because the sample size 
 in winter is quite small.
@@ -674,6 +682,7 @@ in winter is quite small.
 ```{r summary_gls_ph_amplitude}
 summary(the_gls)
 ```
+
 This analysis, which includes consideration of the  high autocorrelation between 
 successive observations, suggests that the regressions lines are not 
 significantly different between seasons. 
@@ -688,9 +697,11 @@ the_gamm  <- gamm(ph ~ range*Season + s(temp) + s(sal) + s(do), correlation = co
                data = amplitude_data, na.action = na.exclude )
 )
 ```
+
 ```{r summary_gamm_ph_amplitude}
 summary(the_gamm$gam)
 ```
+
 So, that changes little.  Again, we see little evidence for a significant 
 relationship between daily tidal amplitudes and daily median pH.
 
@@ -755,5 +766,4 @@ plt +
   scale_y_continuous(name = expression(paste("Corrected pCO"[2],'(', mu,"Atm)")),
                      sec.axis = sec_axis(~ ./75, 
                                          name = 'Daily Tidal Amplitude (ft)'))
-
 ```

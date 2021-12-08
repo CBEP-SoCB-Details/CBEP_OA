@@ -35,7 +35,9 @@ fpath <- file.path(sibling,fn)
 
 
 ## Load The Data
-The following loads existing data, including a "Temperature Adjusted" pCO~2~ value based on Takehashi et al. 2002. It then collapses that data to daily summaries. 
+The following loads existing data, including a "Temperature Adjusted" pCO~2~ 
+value based on Takahashi et al. 2002. It then collapses that data to daily 
+summaries. 
 
 ```{r load_data} 
 all_data <- read_csv(fpath,
@@ -54,7 +56,8 @@ daily_data <- all_data %>%
   mutate(the_date = as.Date(datetime)) %>%
   select(-datetime) %>%
   group_by(the_date) %>%
-  summarise_at(c("temp", "sal", "co2", "co2_corr", "do", "do_mgpl", "ph", "omega_a"),
+  summarise_at(c("temp", "sal", "co2", "co2_corr", 
+                 "do", "do_mgpl", "ph", "omega_a"),
                c(m    = function(x) median(x, na.rm=TRUE),
                  r    = function(x) {suppressWarnings(max(x, na.rm=TRUE) -
                                                         min(x, na.rm=TRUE))},
@@ -78,8 +81,10 @@ the.means    <- sapply(all_data[7:17], mean, na.rm=TRUE)
 the.maxes    <- sapply(all_data[7:17], max, na.rm=TRUE)
 the.SDs      <- sapply(all_data[7:17], sd, na.rm=TRUE)
 the.samplesizes <-  sapply(all_data[7:17], function(x) sum(! is.na(x)) )
-result   <-  cbind(the.mins, the.medians, the.means, the.maxes, the.SDs, the.samplesizes)
-colnames(result) <- c('Minimum', 'Median', 'Mean', 'Maximum', 'Std. Deviation', 'Observations')
+result   <-  cbind(the.mins, the.medians, the.means, 
+                   the.maxes, the.SDs, the.samplesizes)
+colnames(result) <- c('Minimum', 'Median', 'Mean', 
+                      'Maximum', 'Std. Deviation', 'Observations')
 rownames(result) <- c('Temperature',
                       'Salinity',
                       'DO (uMole/kg)',
@@ -97,7 +102,8 @@ write.csv(result, 'summarystats_OA_CBEP.csv')
 ```
 
 ```{r cleanup, echo=FALSE}
-rm(the.mins, the.means, the.medians, the.maxes, the.SDs, the.samplesizes, result)
+rm(the.mins, the.means, the.medians, 
+   the.maxes, the.SDs, the.samplesizes, result)
 ```
 
 # Omega Aragonite Observations and Percentage Below Levels of Concern
@@ -116,7 +122,7 @@ rm(below1.0, below1.5, TotObs, pctbelow1.0, pctbelow1.5)
 knitr::kable(t(res), digits = c(0,0,0,3,3))
 ```
 
-# Daily Omega Aragonite (medians) Observations and and Percentage Below Levels of Concern
+# Daily Omega Aragonite (medians) and Percentage Below Levels of Concern
 ```{r daily_levels_of_concern}
 below1.5 <- sum(daily_data$omega_a_m<1.5, na.rm=TRUE)
 below1.0 <- sum(daily_data$omega_a_m<1.0, na.rm=TRUE)
@@ -133,11 +139,15 @@ knitr::kable(t(res), digits = c(0,0,0,3,3))
 ```
 
 # Monthly Summary Statistics
-This is means **across** years.  This is NOT the same as an estimated monthly average, adjusted for year to year variation, imbalances in time of day data was collected, etc.  For that, we would need to estimate marginal means from a GAMM. We do not pursue that idea in this notebook.  
+This is means **across** years.  This is NOT the same as an estimated monthly
+average, adjusted for year to year variation, imbalances in time of day data was
+collected, etc.  For that, we would need to estimate marginal means from a GAMM.
+We do not pursue that idea in this notebook.
 
 ```{r monthly_stats}
 monthly_tbl <- all_data %>%
-  select(datetime, yyyy, mm, temp, sal, do, do_mgpl, co2, co2_corr, ph, omega_a) %>%
+  select(datetime, yyyy, mm, temp, sal, do, do_mgpl, 
+         co2, co2_corr, ph, omega_a) %>%
   mutate(Month  = factor(mm, labels = month.abb)) %>%
   select(-mm) %>%
   pivot_longer(temp:omega_a, names_to = 'parameter',
@@ -155,8 +165,3 @@ monthly_tbl <- all_data %>%
 knitr::kable(monthly_tbl)
 write_csv(monthly_tbl, 'Monthly_summaries_OA_CBEP.csv')
 ```
-
-
-
-
-
